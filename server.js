@@ -1,12 +1,22 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+var fs = require('fs');
+var https = require('https');
 const got = require('got');
 
-const API_PATH = 'http://192.168.100.161:4000/api/users/';
+const API_PATH = 'http://172.18.69.192:4000/api/users/';
 const API_RESOURCE_BYUSERNAME = 'byusername/';
 
 var app = express();
+
+var privateKey  = fs.readFileSync('./sslcerts/selfsigned.key', 'utf8');
+var certificate = fs.readFileSync('./sslcerts/selfsigned.crt', 'utf8');
+var credentials = {key: privateKey, cert: certificate};
+
+// your express configuration here
+var httpsServer = https.createServer(credentials, app);
+httpsServer.listen(3001);
 
 app.use(session({
     secret: 'secret',
@@ -18,28 +28,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'styles')));
 app.use(express.static(path.join(__dirname, 'javascript')));
 
-app.get('/', function(request, response) {
+app.get('/', function (request, response) {
     // Render login template
     response.sendFile(path.join(__dirname + '/views/login.html'));
 });
 
 // http://localhost:3000/auth
-app.post('/auth', async function(req, res) {
+app.post('/auth', async function (req, res) {
     // Capture the input fields
     let username = req.body.username;
     let password = req.body.password;
     // Ensure the input fields exists and are not empty
     if (username && password) {
-        var uuid = await getUserSignedIn(username,password);
-        if(uuid != ''){
+        var uuid = await getUserSignedIn(username, password);
+        if (uuid != '') {
             // Authenticate the user
             req.session.loggedin = true;
             req.session.username = username;
             req.session.username = uuid;
             // Redirect to userlocation
-            res.redirect('/userlocation?uuid='+uuid);
+            res.redirect('/userlocation?uuid=' + uuid);
         }
-        else{
+        else {
             res.send('Incorrect Username and/or Password!');
             res.end();
         }
@@ -49,7 +59,7 @@ app.post('/auth', async function(req, res) {
     }
 });
 // http://localhost:3000/home
-app.get('/home', function(request, response) {
+app.get('/home', function (request, response) {
     // If the user is loggedin
     if (request.session.loggedin) {
         // Output username
@@ -61,17 +71,21 @@ app.get('/home', function(request, response) {
     response.end();
 });
 
-async function getUserSignedIn(username,password) {
-    console.log(API_PATH+API_RESOURCE_BYUSERNAME+username);
-    try{
-        const response = await got(API_PATH+API_RESOURCE_BYUSERNAME+username);
+app.get('/userlocation', function (req, res) {
+    res.sendFile(path.join(__dirname + '/views/userlocation.html'));
+});
+
+async function getUserSignedIn(username, password) {
+    console.log(API_PATH + API_RESOURCE_BYUSERNAME + username);
+    try {
+        const response = await got(API_PATH + API_RESOURCE_BYUSERNAME + username);
         const user = JSON.parse(response.body);
         console.log(user[0]);
-        if(user[0].password == password){
+        if (user[0].password == password) {
             return user[0]._id;
         }
-    }catch(err){
-        console.log('getUserSignedIn error:'+err);
+    } catch (err) {
+        console.log('getUserSignedIn error:' + err);
     }
     return '';
 }
