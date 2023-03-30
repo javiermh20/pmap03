@@ -1,4 +1,4 @@
-const API_URL_UPDATE_LOCATION = "http://172.18.69.192:4000/api/users/updateUserLocation";
+const API_URL_UPDATE_LOCATION = "https://172.18.70.33:5176/api/users/updateUserLocation";
 const urlParams = new URLSearchParams(window.location.search);
 const uuid = urlParams.get('uuid');
 

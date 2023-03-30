@@ -5,7 +5,7 @@ var fs = require('fs');
 var https = require('https');
 const got = require('got');
 
-const API_PATH = 'http://172.18.69.192:4000/api/users/';
+const API_PATH = 'http://172.18.70.33:4000/api/users/';
 const API_RESOURCE_BYUSERNAME = 'byusername/';
 
 var app = express();
